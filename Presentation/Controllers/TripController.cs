@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using ServicesAbstraction;
 using Shared;
+using Shared.CommonResult;
 using Shared.Dtos.TripDto;
 using Shared.DTOs.TripDto;
 using System;
@@ -39,24 +40,24 @@ namespace Presentation.Controllers
         public async Task<ActionResult<PaginatedResult<TripDto>>> GetAllTrips([FromQuery] TripQueryParams tripSearch)
         {
             var trips = await serviceManger.tripService.GetAllTripsAsync(tripSearch);
-            return Ok(trips);
+            return HandleResult(trips);
         }
 
         // DELETE: api/trip/{id}
         [HttpDelete("{id:int}")]
-        public async Task<IActionResult> DeleteTrip(int id)
+        public async Task<ActionResult<string>> DeleteTrip(int id)
         {
-           await serviceManger.tripService.DeleteTripAsync(id);
+           var res= await serviceManger.tripService.DeleteTripAsync(id);
             
-            return NoContent();
+            return HandleResult(res);
         }
 
         // PUT: api/trip
         [HttpPut]
-        public async Task<ActionResult<TripDto>> UpdateTrip([FromBody] UpdateTripDto dto)
+        public async Task<ActionResult<string>> UpdateTrip([FromBody] UpdateTripDto dto)
         {
             var res=await serviceManger.tripService.UpdateTripAsync(dto);
-            return Ok(res);
+            return HandleResult(res);
         }
 
  

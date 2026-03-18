@@ -15,6 +15,7 @@ namespace Services.Specifications.TripSpecifications
         public TripWithCItysSpecification(int id):base(t=>t.Id==id)
         {
             AddInclude(t => t.bus);
+            AddInclude(q => q.Include(t => t.Driver).ThenInclude(d => d.User));
             //Include متداخل(ThenInclude)
             AddInclude(q =>
                 q.Include(t => t.CityTrips)
@@ -30,7 +31,7 @@ namespace Services.Specifications.TripSpecifications
             
         {
             AddInclude(t => t.bus);
-
+            AddInclude(q => q.Include(t => t.Driver).ThenInclude(d => d.User));
             //Include متداخل(ThenInclude)
             AddInclude(q =>
                 q.Include(t => t.CityTrips)

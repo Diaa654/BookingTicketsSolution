@@ -12,7 +12,8 @@ namespace Shared.DTOs.TripDto
 
         public DateTime DateOfDeparture { get; set; }
         public decimal Duration { get; set; }
-
+        public string DriverName { get; set; } = default!;
+        public string BusPlateNumber { get; set; }=default!;
         public decimal Price { get; set; }
         public bool IsActive { get; set; }
     }

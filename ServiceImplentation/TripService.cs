@@ -77,27 +77,31 @@ namespace Services
             if (trip is null)
                return Error.NotFound("Trip.NotFound", $"The trip with {id} was not found.");
             var driverspec = new DriverSpecifications(trip.DriverId);
-            var driver = await _unitOfWork.GetRepository<Driver, int>().GetByIdAsync(driverspec) ?? throw new Exception("driver not found");
+            var driver = await _unitOfWork.GetRepository<Driver, int>().GetByIdAsync(driverspec);
+            if (driver is null)
+                return Error.NotFound("Driver.NotFound", $"The driver for the trip with {id} was not found.");
             var TripToReturn = _mapper.Map<TripDto>(trip);
-            TripToReturn.DriverName = driver.User.FirstName + driver.User.LastName;
+            TripToReturn.DriverName = driver.User.FirstName+" " + driver.User.LastName;
             return TripToReturn;
         }
 
-        public async Task<bool> DeleteTripAsync(int id)
+        public async Task<Result<string>> DeleteTripAsync(int id)
         {
             var trip = await _unitOfWork.GetRepository<Trip, int>().GetByIdAsync(id);
             if (trip is null)
-                return false;//we will use result pattern
+                return Error.NotFound("Trip.NotFound", $"The trip with {id} was not found.");
             _unitOfWork.GetRepository<Trip, int>().Delete(trip);
             await _unitOfWork.SaveChangesAsync();
-            return true;
+            return "Trip deleted successfully.";
         }
 
-        public async Task<PaginatedResult<TripDto>> GetAllTripsAsync(TripQueryParams tripSearch)
+        public async Task<Result<PaginatedResult<TripDto>>> GetAllTripsAsync(TripQueryParams tripSearch)
         {
             var repo = _unitOfWork.GetRepository<Trip, int>();
             var spec = new TripWithCItysSpecification(tripSearch);
             var trips = await repo.GetAllAsync(spec);
+            if(trips == null || !trips.Any())
+                return Error.NotFound("Trips.NotFound", "No trips found matching the search criteria.");
             var DataToReturn = _mapper.Map<IEnumerable<TripDto>>(trips);
             int CountOfDataToReturn = DataToReturn.Count();
             var pagedSpec = new TripCountSpecifications(tripSearch);
@@ -107,16 +111,40 @@ namespace Services
 
 
 
-        public async Task<TripDto> UpdateTripAsync(UpdateTripDto dto)
+        public async Task<Result<string>> UpdateTripAsync(UpdateTripDto dto)
         {
             var spec = new TripWithCItysSpecification(dto.Id);
             var existingTrip = await _unitOfWork.GetRepository<Trip, int>().GetByIdAsync(spec);
+
             if (existingTrip is null)
-                throw new Exception("Trip not found");//we will use result pattern
-                                                      //_unitOfWork.GetRepository<Trip, int>().Update(_mapper.Map<Trip>(dto));
+                return Error.NotFound("Trip.NotFound", $"The trip with ID {dto.Id} was not found.");
+
             _mapper.Map(dto, existingTrip);
+            if (existingTrip.bus.PlateNumber != dto.BusPlateNumber)
+            {
+                var newBus = await _unitOfWork.GetRepository<Bus, int>()
+                    .GetByIdAsync(new BusSpecifications(dto.BusPlateNumber));
+
+                if (newBus == null) return Error.NotFound("Bus.NotFound", "New bus not found.");
+                existingTrip.busId = newBus.Id;
+                existingTrip.bus = newBus;
+            }
+            var nameParts = dto.DriverName.Split(' ', 2); 
+            var firstName = nameParts[0];
+            var lastName = nameParts.Length > 1 ? nameParts[1] : string.Empty;
+
+            if (existingTrip.Driver.User.FirstName != firstName || existingTrip.Driver.User.LastName != lastName)
+            {
+                var newDriver = await _unitOfWork.GetRepository<Driver, int>()
+                    .GetByIdAsync(new DriverSpecifications(dto.DriverName));
+
+                if (newDriver == null) return Error.NotFound("Driver.NotFound", "New driver not found.");
+                existingTrip.DriverId = newDriver.UserId;
+                existingTrip.Driver = newDriver;
+            }
+
             await _unitOfWork.SaveChangesAsync();
-            return _mapper.Map<TripDto>(existingTrip);
+            return "Trip updated successfully.";
         }
 
 

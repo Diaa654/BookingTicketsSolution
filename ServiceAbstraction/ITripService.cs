@@ -12,11 +12,11 @@ namespace ServicesAbstraction
 {
     public interface ITripService 
     {
-        Task<PaginatedResult<TripDto>> GetAllTripsAsync(TripQueryParams tripSearch);
+        Task<Result<PaginatedResult<TripDto>>> GetAllTripsAsync(TripQueryParams tripSearch);
         Task<Result<TripDto>> GetTripByIdAsync(int id);
         Task<Result<string>> CreateTripAsync(CreateTripDto dto);
-        Task<TripDto> UpdateTripAsync(UpdateTripDto dto);
-        Task<bool> DeleteTripAsync(int id);
+        Task<Result<string>> UpdateTripAsync(UpdateTripDto dto);
+        Task<Result<string>> DeleteTripAsync(int id);
 
 
     }

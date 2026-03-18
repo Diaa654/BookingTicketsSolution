@@ -14,10 +14,7 @@ namespace Services
     {
         
         public IAuthenticationService authenticationService => AuthenticationFactory.Invoke();
-
-      
         public ITripService tripService => TripFactory.Invoke();
-
         public IBusService busService => BusFactory.Invoke();
     }
 }
